@@ -2,4 +2,4 @@ Version 0.46:
 
     You can go back by going down to previous levels. Added a powerup that pauses the snow.    
 Version 0.462:
-    Single color powerups. DELETE THE "0x6c0x64.sa" FILE TO PLAY
+    Single color powerups.
