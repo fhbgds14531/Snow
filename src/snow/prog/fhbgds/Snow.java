@@ -30,13 +30,14 @@ import snow.prog.fhbgds.entity.Powerup;
 
 public class Snow {
 
-	private static Float version = 0.463f;
+	private static Float version = 0.464f;
 
 	public static Random rand = new Random();
 
 	static File save;
 	static File lDeaths;
-
+	static File positions;
+	
 	static IO io = new IO();
 
 	public int flakesInAir = 0;
@@ -86,6 +87,8 @@ public class Snow {
 	private static int slowCount = 0;
 
 	public static boolean doDevStuff;
+
+	private static Integer levelLives;
 
 	public Snow() {
 		try {
@@ -251,6 +254,7 @@ public class Snow {
 				thePlayer.onUpdate();
 
 				if(Display.isCloseRequested()){
+					save();
 					isCloseRequested = true;
 					Display.destroy();
 					Mouse.destroy();
@@ -404,7 +408,12 @@ public class Snow {
 			runSlow = false;
 			slowCount = 0;
 			deaths = 0;
-			lives = (int) Math.round(baseLives + 0.25*levelNum);
+			if(levelLives != 0){
+				lives = (int) Math.round(baseLives + 0.25*levelNum);
+			}else{
+				lives = levelLives;
+				levelLives = 0;
+			}
 			flakes = new HashMap<Float[], Flake>();
 			thePlayer.yPos = currentHeight - thePlayer.size;
 			levelNum++;
@@ -421,6 +430,8 @@ public class Snow {
 	}
 	
 	public static void decrementLevel(){
+		levelLives = lives;
+		lives = (int) Math.round(baseLives + 0.25*levelNum);
 		levelNum--;
 		thePowerup = null;
 		if(levelNum > -1) deaths = levelDeaths[levelNum];
@@ -477,12 +488,16 @@ public class Snow {
 		new Updater(version);
 		if(!needsUpdate){
 			File updater = new File("Snow_Avoider_Installer.jar");
+			File posDir = new File("flakes/");
 			if(updater.exists()) updater.delete();
 			save = new File("0x730x61.sa");
 			lDeaths = new File("0x6c0x64.sa");
-			if(!save.exists() || !lDeaths.exists()){
+			positions = new File("flakes/positions.sa");
+			if(!save.exists() || !lDeaths.exists() || !positions.exists()){
 				if(!save.exists()) save.createNewFile();
 				if(!lDeaths.exists()) lDeaths.createNewFile();
+				if(!posDir.exists()) posDir.mkdirs();
+				if(!positions.exists()) positions.createNewFile();
 				loadedLDeaths = false;
 			}else{
 				HashMap<String, String> map = null;
@@ -510,6 +525,9 @@ public class Snow {
 						if(key.contentEquals("blue")){
 							blue = Float.valueOf(entry.getValue());
 						}
+						if(key.contains("levelLives")){
+							levelLives = Integer.valueOf(entry.getValue());
+						}
 					}
 				}
 				try{
@@ -529,7 +547,7 @@ public class Snow {
 			new Snow();
 		}
 		if(needsUpdate){
-			Updater.downloadFile(new File("Snow_Avoider_Installer.jar"), new URL("https://github.com/fhbgds14531/Snow/raw/master/Snow_Avoider_Installer.jar"));
+			Updater.downloadFile(new File("Snow_Avoider_Installer.jar"), new URL("https://github.com/fhbgds14531/SnowAvoiderDL/raw/master/Snow_Avoider_Installer.jar"));
 			try{Runtime.getRuntime().exec("javaw.exe -jar Snow_Avoider_Installer.jar"); System.exit(0);}catch(Exception e){e.printStackTrace();}
 		}
 	}
@@ -542,6 +560,7 @@ public class Snow {
 		map.put("red", String.valueOf(red));
 		map.put("green", String.valueOf(green));
 		map.put("blue", String.valueOf(blue));
+		map.put("levelLives", String.valueOf(levelLives));
 		try {
 			io.save(map, save.getPath());
 			io.save(levelDeaths, lDeaths.getPath());
