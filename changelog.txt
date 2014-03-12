@@ -1,0 +1,7 @@
+Version 0.46:    
+
+    You can go back by going down to previous levels. Added a powerup that pauses the snow.    
+Version 0.462:
+    Single color powerups.    
+Version 0.464:    
+    Downloads from a new dedicated repo.
