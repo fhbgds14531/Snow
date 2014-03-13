@@ -19,7 +19,7 @@ public class Updater {
 			out = new FileOutputStream(file);
 			if(file.exists()) file.delete();
 			file.createNewFile();
-			url = new URL("https://github.com/fhbgds14531/Snow/raw/master/version.txt");
+			url = new URL("https://github.com/fhbgds14531/SnowAvoiderDL/raw/master/version.txt");
 			checkVersion(this.currentVersion, url);
 		} catch (Exception e) {
 			e.printStackTrace();

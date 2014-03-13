@@ -30,7 +30,7 @@ import snow.prog.fhbgds.entity.Powerup;
 
 public class Snow {
 
-	private static Float version = 0.464f;
+	private static Float version = 0.466f;
 
 	public static Random rand = new Random();
 
@@ -115,6 +115,7 @@ public class Snow {
 	}
 
 	private void runSim() {
+		if(levelLives == null) levelLives = 0;
 		if(!loadedLDeaths){
 			int i = 0;
 			while (i <= maxLevel){
@@ -127,6 +128,7 @@ public class Snow {
 		timeSinceLastFrame();
 		lastFPS = getTime();
 		lives = baseLives + (int) Math.round(levelNum * 0.25); 
+		levelLives = lives;
 		Display.setTitle(title + " Level: " + levelNum + " Total Deaths: " + totalDeaths + " (" + lives + " lives remaining)");
 		isPaused = true;
 		shouldRenderPaused = true;
@@ -185,7 +187,6 @@ public class Snow {
 					if((Keyboard.isKeyDown(Keyboard.KEY_LCONTROL) || Keyboard.isKeyDown(Keyboard.KEY_RCONTROL)) && Keyboard.isKeyDown(Keyboard.KEY_R)){
 						flakes = new HashMap<Float[], Flake>();
 						thePlayer = new Player();
-						levelNum = 0;
 						lives = baseLives;
 						isPaused = true;
 						shouldRenderPaused = true;
