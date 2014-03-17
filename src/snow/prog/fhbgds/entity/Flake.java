@@ -16,7 +16,7 @@ public class Flake extends FlakeBase {
 	public boolean onGround;
 	
 	@Override
-	public void onSnowTick(){
-		super.onSnowTick();
+	public void onUpdate(){
+		super.onUpdate();
 	}
 }

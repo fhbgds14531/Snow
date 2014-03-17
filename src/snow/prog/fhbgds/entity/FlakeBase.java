@@ -14,7 +14,7 @@ public Random rand = new Random();
 	public float timeTillMelt;
 	public boolean onGround = false;
 	
-	public void onSnowTick(){
+	public void onUpdate(){
 if(!this.onGround) this.yPos += rand.nextInt(2);
 		
 		if((this.yPos + this.size >= Snow.currentHeight)){

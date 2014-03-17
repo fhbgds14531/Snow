@@ -4,8 +4,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map.Entry;
 
-import org.lwjgl.opengl.Display;
-
 import snow.prog.fhbgds.MathHelp;
 import snow.prog.fhbgds.Snow;
 
@@ -23,11 +21,11 @@ public class Player extends BaseClass{
 			if(this.xPos < 0) this.xPos = 780;
 			if(this.yPos < 0){
 				this.yPos = 0;
-				Snow.advanceLevel();
+				Snow.instance.advanceLevel();
 			}
 			if(this.xPos > 780) this.xPos = 0;
 			if(this.yPos > 580){
-				Snow.decrementLevel();
+				Snow.instance.decrementLevel();
 			}
 		}
 		
@@ -42,7 +40,7 @@ public class Player extends BaseClass{
 			}
 		}
 		if(flag && !Snow.doDevStuff){
-			Snow.handleDeath();
+			Snow.instance.handleDeath();
 		}
 		boolean flag1 = false;
 		Powerup powerup = Snow.thePowerup;
@@ -68,20 +66,29 @@ public class Player extends BaseClass{
 				}
 			}
 			if(flag1){
+				float pitch = rand.nextFloat();
+				pitch *= rand.nextFloat();
+				if(pitch > 1) pitch = 1;
+				if(pitch < 0.5) pitch = 0.5f;
+				
+				pitch = 0.75f;
+				
 				int type = powerup.getType();
 				if(type == Powerup.TYPE_NUKE){
 					Snow.flakes = new HashMap<Float[], Flake>();
 					Snow.thePowerup = null;
+					Snow.al.playSound("powerup", pitch, 0.8f, false);
 				}
 				if(type == Powerup.TYPE_SLOWTIME){
-					Snow.runSlow();
-					System.out.println("SLOWTIME");
+					Snow.instance.runSlow();
 					Snow.thePowerup = null;
+					Snow.al.playSound("powerup", pitch, 0.8f, false);
 				}
 				if(type == Powerup.TYPE_LIVES){
 					Snow.lives += 3;
-					Display.setTitle(Snow.title + " Level: " + Snow.levelNum + " Total Deaths: " + Snow.totalDeaths + " (" + Snow.lives + " lives remaining)");
+					Snow.instance.updateTitle();
 					Snow.thePowerup = null;
+					Snow.al.playSound("powerup", pitch, 0.8f, false);
 				}
 			}
 		}

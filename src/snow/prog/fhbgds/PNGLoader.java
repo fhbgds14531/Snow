@@ -11,30 +11,32 @@ import de.matthiasmann.twl.utils.PNGDecoder;
 
 public class PNGLoader {
 	
-	private String[] ICON_PATHS = new String[] {"Snow_Avoider_lib/16x16.png", "Snow_Avoider_lib/64x64.png"};
+	String[] paths = new String[] {"Snow_Avoider_lib/64x64.png", "Snow_Avoider_lib/16x16.png"};
 	
 	public void setIcons(){
-        ByteBuffer[] icon_array = new ByteBuffer[ICON_PATHS.length];
+        ByteBuffer[] icons = new ByteBuffer[paths.length];
+//		ByteBuffer[] icons = new ByteBuffer[2];
         try {
-            for (int i = 0; i < ICON_PATHS.length; i++){
-                icon_array[i] = ByteBuffer.allocateDirect(1);
-                String path = ICON_PATHS[i];
-                icon_array[i] = loadIcon(path);
+//        	icons[0] = ImageIO.read(new File("Snow_Avoider_lib/64x64.png"));
+            for (int i = 0; i < paths.length; i++){
+                icons[i] = ByteBuffer.allocateDirect(1);
+                String path = paths[i];
+                icons[i] = loadIcon(path);
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
-        Display.setIcon(icon_array);
+        Display.setIcon(icons);
     }
  
 	private static ByteBuffer loadIcon(String path) throws IOException {
         InputStream inputStream = new FileInputStream(path);
        	try {
            	PNGDecoder decoder = new PNGDecoder(inputStream);
-           	ByteBuffer bytebuf = ByteBuffer.allocateDirect(decoder.getWidth()*decoder.getHeight()*4);
-           	decoder.decode(bytebuf, decoder.getWidth()*4, PNGDecoder.Format.RGBA);
-          	bytebuf.flip();
-           	return bytebuf;
+           	ByteBuffer b = ByteBuffer.allocateDirect(decoder.getWidth()*decoder.getHeight()*4);
+           	decoder.decode(b, decoder.getWidth()*4, PNGDecoder.Format.RGBA);
+          	b.flip();
+           	return b;
        	} finally {
        		inputStream.close();
        	}

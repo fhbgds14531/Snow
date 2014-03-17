@@ -22,7 +22,7 @@ public class Powerup extends FlakeBase {
 		if (i >=  25) this.type = Powerup.TYPE_NUKE;
 		if (i < 25) this.type = Powerup.TYPE_SLOWTIME;
 		if(i >= 100) this.type = Powerup.TYPE_LIVES;
-		this.xPos = this.rand.nextInt(Snow.currentWidth);
+		this.xPos = this.rand.nextInt(Snow.currentWidth - this.size);
 		this.size = 10;
 		if(this.type == Powerup.TYPE_NUKE){
 			this.red = 0.8f;
@@ -42,7 +42,7 @@ public class Powerup extends FlakeBase {
 	}
 	
 	@Override
-	public void onSnowTick() {
+	public void onUpdate() {
 		if(!this.onGround) this.yPos += rand.nextInt(2);
 		if((this.yPos > Snow.currentHeight)){
 			Snow.thePowerup = null;

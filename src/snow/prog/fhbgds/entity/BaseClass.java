@@ -5,8 +5,8 @@ import java.util.Random;
 public abstract class BaseClass {
 
 	public Random rand = new Random();
-	public int xPos;
-	public int yPos;
+	public float xPos;
+	public float yPos;
 	public int size;
 	
 	public abstract void onUpdate();
