@@ -13,7 +13,6 @@ import java.util.Map.Entry;
 import java.util.Random;
 
 import org.lwjgl.BufferUtils;
-import org.lwjgl.LWJGLException;
 import org.lwjgl.Sys;
 import org.lwjgl.input.Cursor;
 import org.lwjgl.input.Keyboard;
@@ -24,19 +23,19 @@ import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.DisplayMode;
 import org.lwjgl.opengl.GL11;
 
+import snow.prog.fhbgds.audio.ALStuff;
 import snow.prog.fhbgds.entity.BaseClass;
 import snow.prog.fhbgds.entity.Flake;
 import snow.prog.fhbgds.entity.Player;
 import snow.prog.fhbgds.entity.Powerup;
 
 public class Snow {
-
 	
 	public static ALStuff al = new ALStuff();
 	public static final String musicFileName = "Main.wav";
 //=======================================================
 	
-	private static Float version = 0.47f;
+	private static Float version = 0.5f;
 	
 //=======================================================
 	public static Random rand = new Random();
@@ -64,8 +63,8 @@ public class Snow {
 	public static int baseFreq = 27;
 
 	public static volatile boolean isCloseRequested = false;
-	public static volatile boolean isPaused = false;
-	public static volatile boolean shouldRenderPaused;
+	public volatile boolean isPaused = false;
+	public volatile boolean shouldRenderPaused;
 	public static boolean doAutoHandicap;
 	public static Snow instance;
 	public static HashMap<Float[], Flake> flakes = new HashMap<Float[], Flake>();
@@ -94,12 +93,13 @@ public class Snow {
 	private boolean runSlow;
 	private static int slowCount = 0;
 	public int cooldown = 0;
+	private static Float speedToSet;
 
 	public static boolean doDevStuff;
 
 	private static Integer levelLives;
 
-	public Snow() {
+	public Snow() { //TODO Constructor
 		try {
 			al.initAL();
 			Display.setDisplayMode(new DisplayMode(800, 600));
@@ -113,8 +113,9 @@ public class Snow {
 			getReadyFor2DDrawing();
 			thePlayer = new Player();
 			instance = this;
+//			if(speedToSet > 1) this.timer.timerSpeed = speedToSet;
 			runSim();
-		} catch (LWJGLException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 			Display.destroy();
 			al.killALData();
@@ -123,8 +124,6 @@ public class Snow {
 			System.exit(1);
 		}
 	}
-	
-	
 
 	private void runSim() {
 		if(levelLives == null) levelLives = 0;
@@ -143,14 +142,14 @@ public class Snow {
 		Display.setTitle(title + " Level: " + levelNum + " Total Deaths: " + totalDeaths + " (" + lives + " lives remaining)");
 		isPaused = true;
 		shouldRenderPaused = true;
-		al.playSound("main", 1f, 0.75f, true);
+		al.playSound("main", 1f, 0.25f, true);
 		
 		while(!Display.isCloseRequested() && !isCloseRequested){
-            this.timer.updateTimer();
+			if(this.shouldRenderPaused) this.isPaused = true;
 			if(isPaused){
-				AL10.alSourcef(al.sources[0].get(0), AL10.AL_GAIN, 0.25f);
+				AL10.alSourcef(al.getSources()[0].get(0), AL10.AL_GAIN, 0.25f);
 			}else{
-				AL10.alSourcef(al.sources[0].get(0), AL10.AL_GAIN, 0.75f);
+				AL10.alSourcef(al.getSources()[0].get(0), AL10.AL_GAIN, 0.75f);
 			}
 			for (int i = 0; i < this.timer.elapsedFullTicks; i++){
 	            this.doTick();
@@ -158,6 +157,7 @@ public class Snow {
 			updateDebugInfo();
 			updateFrequencyAndHandicap();
 			checkKeyboardAndMouse();
+			this.timer.updateTimer();
 			if(!isPaused){
 				if(levelNum == maxLevel && colorCount == 10 && !doFPS){
 					changeColors();
@@ -254,7 +254,7 @@ public class Snow {
 			if(entry.getValue().timeTillMelt <= 0 && entry.getValue().rand.nextFloat() < 0.5f){
 				if(entry.getValue().size >= 1){
 					entry.getValue().size--;
-					entry.getValue().timeTillMelt = 300;
+					entry.getValue().timeTillMelt = 150;
 					entry.getValue().onGround = false;
 				}else{
 					removalList[count] = entry.getKey();
@@ -417,72 +417,67 @@ public class Snow {
 		isPaused = false;
 	}
 
-	public static void main(String[] args) throws Exception {
+	public static void main(String[] args) throws Exception { //TODO main method
 //		new Updater(version);
 //		if(!needsUpdate){
-//			File updater = new File("Snow_Avoider_Installer.jar");
-//			File posDir = new File("flakes/");
-//			if(updater.exists()) updater.delete();
-//			save = new File("0x730x61.sa");
-//			lDeaths = new File("0x6c0x64.sa");
-//			positions = new File("flakes/positions.sa");
-//			if(!save.exists() || !lDeaths.exists() || !positions.exists()){
-//				if(!save.exists()) save.createNewFile();
-//				if(!lDeaths.exists()) lDeaths.createNewFile();
-//				if(!posDir.exists()) posDir.mkdirs();
-//				if(!positions.exists()) positions.createNewFile();
-//				loadedLDeaths = false;
-//			}else{
-//				HashMap<String, String> map = null;
-//				try{map = io.load("0x730x61.sa");}catch(Exception e){e.printStackTrace();}
-//				if(map != null){
-//					Iterator<Entry<String, String>> it = map.entrySet().iterator();
-//					while(it.hasNext()){
-//						Entry<String, String> entry = it.next();
-//						String key = entry.getKey();
-//						if(key.contentEquals("levelNum")){
-//							levelNum = Integer.valueOf(entry.getValue());
-//						}
-//						if(key.contentEquals("deaths")){
-//							deaths = Integer.valueOf(entry.getValue());
-//						}
-//						if(key.contentEquals("totalDeaths")){
-//							totalDeaths = Integer.valueOf(entry.getValue());
-//						}
-//						if(key.contentEquals("red")){
-//							red = Float.valueOf(entry.getValue());
-//						}
-//						if(key.contentEquals("green")){
-//							green = Float.valueOf(entry.getValue());
-//						}
-//						if(key.contentEquals("blue")){
-//							blue = Float.valueOf(entry.getValue());
-//						}
-//						if(key.contains("levelLives")){
-//							levelLives = Integer.valueOf(entry.getValue());
-//						}
-//						if(key.contains("timerSpeed")){
-//							this.timer.timerSpeed = Float.valueOf(entry.getValue());
-//						}
-//					}
-//				}
-//				try{
-//					levelDeaths = io.loadLevelDeaths("0x6c0x64.sa");
-//					loadedLDeaths = true;
-//				}catch(Exception e1){
-//					loadedLDeaths = false;
-//					e1.printStackTrace();
-//				}
-//			}
+			File updater = new File("Snow_Avoider_Installer.jar");
+			if(updater.exists()) updater.delete();
+			save = new File("0x730x61.sa");
+			lDeaths = new File("0x6c0x64.sa");
+			if(!save.exists() || !lDeaths.exists()){
+				if(!save.exists()) save.createNewFile();
+				if(!lDeaths.exists()) lDeaths.createNewFile();
+				loadedLDeaths = false;
+			}else{
+				HashMap<String, String> map = null;
+				try{map = io.load("0x730x61.sa");}catch(Exception e){e.printStackTrace();}
+				if(map != null){
+					Iterator<Entry<String, String>> it = map.entrySet().iterator();
+					while(it.hasNext()){
+						Entry<String, String> entry = it.next();
+						String key = entry.getKey();
+						if(key.contentEquals("levelNum")){
+							levelNum = Integer.valueOf(entry.getValue());
+						}
+						if(key.contentEquals("deaths")){
+							deaths = Integer.valueOf(entry.getValue());
+						}
+						if(key.contentEquals("totalDeaths")){
+							totalDeaths = Integer.valueOf(entry.getValue());
+						}
+						if(key.contentEquals("red")){
+							red = Float.valueOf(entry.getValue());
+						}
+						if(key.contentEquals("green")){
+							green = Float.valueOf(entry.getValue());
+						}
+						if(key.contentEquals("blue")){
+							blue = Float.valueOf(entry.getValue());
+						}
+						if(key.contains("levelLives")){
+							levelLives = Integer.valueOf(entry.getValue());
+						}
+						if(key.contains("timerSpeed")){
+							Snow.speedToSet = Float.valueOf(entry.getValue());
+						}
+					}
+				}
+				try{
+					levelDeaths = io.loadLevelDeaths("0x6c0x64.sa");
+					loadedLDeaths = true;
+				}catch(Exception e1){
+					loadedLDeaths = false;
+					e1.printStackTrace();
+				}
+			}
 			File dev = new File("IAMFHBGDS");
 			if(dev.exists()){
 				doDevStuff = true;
-				System.err.println("RUNNING AS DEVELOPER");
+				System.out.println("RUNNING AS DEVELOPER");
 			}
 			new PNGLoader().setIcons();
 			new Snow();
-//		}
-//		if(needsUpdate){
+//		}else if(needsUpdate){
 //			Updater.downloadFile(new File("Snow_Avoider_Installer.jar"), new URL("https://github.com/fhbgds14531/SnowAvoiderDL/raw/master/Snow_Avoider_Installer.jar"));
 //			try{Runtime.getRuntime().exec("javaw.exe -jar Snow_Avoider_Installer.jar"); System.exit(0);}catch(Exception e){e.printStackTrace();}
 //		}

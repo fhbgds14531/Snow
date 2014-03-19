@@ -11,7 +11,7 @@ import de.matthiasmann.twl.utils.PNGDecoder;
 
 public class PNGLoader {
 	
-	String[] paths = new String[] {"Snow_Avoider_lib/64x64.png", "Snow_Avoider_lib/16x16.png"};
+	String[] paths = new String[] {"assets/64x64.png", "assets/16x16.png"};
 	
 	public void setIcons(){
         ByteBuffer[] icons = new ByteBuffer[paths.length];
