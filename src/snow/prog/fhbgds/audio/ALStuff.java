@@ -1,28 +1,22 @@
 package snow.prog.fhbgds.audio;
 
 import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.util.HashMap;
 
 import org.lwjgl.BufferUtils;
-import org.lwjgl.LWJGLException;
 import org.lwjgl.openal.AL;
 import org.lwjgl.openal.AL10;
 import org.lwjgl.util.WaveData;
 
-import snow.prog.fhbgds.Snow;
-
 public class ALStuff {
 	
-	private String musicLoc = "assets";
+	String musicLoc = "sound";
 	
-	private File[] files = new File[] {new File(musicLoc + "/" + Snow.musicFileName), new File(musicLoc + "/powerup.wav"), new File(musicLoc + "/upLevel.wav"), new File(musicLoc + "/downLevel.wav"), new File(musicLoc + "/death.wav")};
-	private IntBuffer[] sources = new IntBuffer[getFiles().length];
+	String[] files = new String[] {musicLoc + "/main.wav", musicLoc + "/powerup.wav", musicLoc + "/upLevel.wav", musicLoc + "/downLevel.wav", musicLoc + "/death.wav"};
+	IntBuffer[] sources = new IntBuffer[getFiles().length];
 	IntBuffer[] buffers = new IntBuffer[getFiles().length];
 	FloatBuffer sourcePos = (FloatBuffer)BufferUtils.createFloatBuffer(3).put(new float[] { 0.0f, 0.0f, 0.0f }).rewind();
 	FloatBuffer sourceVel = (FloatBuffer)BufferUtils.createFloatBuffer(3).put(new float[] { 0.0f, 0.0f, 0.0f }).rewind();
@@ -30,7 +24,7 @@ public class ALStuff {
 	FloatBuffer listenerVel = (FloatBuffer)BufferUtils.createFloatBuffer(3).put(new float[] { 0.0f, 0.0f, 0.0f }).rewind();
 	FloatBuffer listenerOri = (FloatBuffer)BufferUtils.createFloatBuffer(6).put(new float[] { 0.0f, 0.0f, -1.0f,  0.0f, 1.0f, 0.0f }).rewind();
 	
-	HashMap<String, IntBuffer> map = new HashMap<String, IntBuffer>();
+	HashMap<String, IntBuffer> sourceMap = new HashMap<String, IntBuffer>();
 
 	public void initAL(){
 		try{
@@ -40,20 +34,24 @@ public class ALStuff {
 				buffers[i] = BufferUtils.createIntBuffer(1);
 			}
 			loadALData();
-		} catch (LWJGLException le) {
-			le.printStackTrace();
+			AL10.alGetError();
+		} catch (Exception e) {
+			e.printStackTrace();
 			return;
 		}
 		AL10.alGetError();
 		setListenerValues();
-		map.put("main", getSources()[0]);
-		map.put("powerup", getSources()[1]);
-		map.put("upLevel", getSources()[2]);
-		map.put("downLevel", getSources()[3]);
-		map.put("death", getSources()[4]);
+		sourceMap.put("main", getSources()[0]);
+		sourceMap.put("powerup", getSources()[1]);
+		sourceMap.put("upLevel", getSources()[2]);
+		sourceMap.put("downLevel", getSources()[3]);
+		sourceMap.put("death", getSources()[4]);
 	}
 	
 	public void killALData() {
+		for(int i = 0; i < getFiles().length; i++) {
+			AL10.alSourceStop(getSources()[i].get(0));
+		}
 		for(int i = 0; i < getFiles().length; i++){
 			AL10.alDeleteSources(getSources()[i]);
 			AL10.alDeleteBuffers(buffers[i]);
@@ -66,24 +64,25 @@ public class ALStuff {
 		AL10.alListener(AL10.AL_ORIENTATION, listenerOri);
 	}
 	
-	public int loadALData() {
+	public int loadALData() throws Exception {
 		for(int i = 0; i < getFiles().length; i++){
 			if(buffers[i] == null) buffers[i] = BufferUtils.createIntBuffer(1);
 			AL10.alGenBuffers(buffers[i]);
 			InputStream in = null;
 			BufferedInputStream bin = null;
 			try {
-				in = new FileInputStream(getFiles()[i].getPath());
+				in = ALStuff.class.getResourceAsStream(getFiles()[i]);
 				bin = new BufferedInputStream(in);
+				WaveData wavFile = WaveData.create(bin);
+				AL10.alBufferData(buffers[i].get(0), wavFile.format, wavFile.data, wavFile.samplerate);
+				wavFile.dispose();
 			} catch (Exception e) {
 				e.printStackTrace();
 				return AL10.AL_FALSE;
+			} finally {
+				if(in != null)in.close();
+				if(bin != null)bin.close();
 			}
-			WaveData wavFile = WaveData.create(bin);
-			try {if(in != null)in.close(); if(bin != null)bin.close();}catch(IOException ex){ex.printStackTrace();}
-			
-			AL10.alBufferData(buffers[i].get(0), wavFile.format, wavFile.data, wavFile.samplerate);
-			wavFile.dispose();
 			
 			if(getSources()[i] == null) getSources()[i] = BufferUtils.createIntBuffer(1);
 			AL10.alGenSources(getSources()[i]);
@@ -93,7 +92,7 @@ public class ALStuff {
 	}
 	
 	public void playSound(String name, float pitch, float gain, boolean loop){
-		IntBuffer source = map.get(name);
+		IntBuffer source = sourceMap.get(name);
 		if(source == null){
 			System.err.println("Invalid sound name: \"" + name + "\"");
 			return;
@@ -110,7 +109,6 @@ public class ALStuff {
 		if(loop){
 			AL10.alSourcei(source.get(0), AL10.AL_LOOPING, AL10.AL_TRUE);
 		}
-		System.out.println("Playing sound \"" + name + "\"");
 		AL10.alSourcePlay(source);
 	}
 
@@ -118,7 +116,7 @@ public class ALStuff {
 		return sources;
 	}
 	
-	public File[] getFiles() {
+	public String[] getFiles() {
 		return files;
 	}
 }

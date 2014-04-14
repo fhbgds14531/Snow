@@ -4,53 +4,60 @@ import snow.prog.fhbgds.Snow;
 
 public class Powerup extends FlakeBase {
 	
-	public static final int TYPE_NUKE = 0;
-	public static final int TYPE_SLOWTIME = 1;
-	public static final int TYPE_LIVES = 2;
-	
-	public static Powerup thePowerup;
-	
 	public float red;
 	public float green;
 	public float blue;
 
-	public int type;
+	public PowerupType type;
 	
 	public Powerup(){
-		thePowerup = this;
-		int i = rand.nextInt(200);
-		if (i >=  25) this.type = Powerup.TYPE_NUKE;
-		if (i < 25) this.type = Powerup.TYPE_SLOWTIME;
-		if(i >= 100) this.type = Powerup.TYPE_LIVES;
-		this.xPos = this.rand.nextInt(Snow.currentWidth - this.size);
+		int i = rand.nextInt(225);
+		if (i >=  25) this.type = PowerupType.NUKE;
+		if (i < 25) this.type = PowerupType.SLOWTIME;
+		if(i >= 100) this.type = PowerupType.LIVES;
+		if(i >= 150) this.type = PowerupType.SHRINK;
+		if(i >= 200) this.type = PowerupType.RANDOM;
+		this.xPos = this.rand.nextInt(Snow.game.currentWidth - this.size);
 		this.size = 10;
-		if(this.type == Powerup.TYPE_NUKE){
+		if(this.type == PowerupType.NUKE){
 			this.red = 0.8f;
 			this.green = 0.3f;
 			this.blue = 0.2f;
 		}
-		if(this.type == Powerup.TYPE_SLOWTIME){
+		if(this.type == PowerupType.SLOWTIME){
 			this.red = 0.3f;
 			this.green = 0.8f;
 			this.blue = 0.2f;
 		}
-		if(this.type == Powerup.TYPE_LIVES){
+		if(this.type == PowerupType.LIVES){
 			this.red = 0.2f;
 			this.green = 0.3f;
 			this.blue = 0.8f;
+		}
+		if(this.type == PowerupType.SHRINK){
+			this.red = 0.8f;
+			this.green = 0.8f;
+			this.blue = 0.2f;
 		}
 	}
 	
 	@Override
 	public void onUpdate() {
 		if(!this.onGround) this.yPos += rand.nextInt(2);
-		if((this.yPos > Snow.currentHeight)){
-			Snow.thePowerup = null;
-			thePowerup = null;
+		if((this.yPos > Snow.game.currentHeight)){
+			Snow.game.thePowerup = null;
+		}
+		if(this.type == PowerupType.RANDOM){
+			this.red = (this.rand.nextFloat() * 2);
+			if(this.red > 1) this.red = this.red/2;
+			this.green = (this.rand.nextFloat() * 2);
+			if(this.green > 1) this.green = this.green/2;
+			this.blue = (this.rand.nextFloat() * 2);
+			if(this.blue > 1) this.blue = this.blue/2;
 		}
 	}
 
-	public int getType(){
+	public PowerupType getType(){
 		return this.type;
 	}
 }

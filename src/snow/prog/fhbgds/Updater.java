@@ -14,6 +14,7 @@ public class Updater {
 	File file = new File("version.txt");
 
 	public Updater(float version){
+		System.setProperty("jsse.enableSNIExtension", "false");
 		currentVersion = version;
 		try {
 			out = new FileOutputStream(file);

@@ -17,8 +17,8 @@ public Random rand = new Random();
 	public void onUpdate(){
 if(!this.onGround) this.yPos += rand.nextInt(2);
 		
-		if((this.yPos + this.size >= Snow.currentHeight)){
-			this.yPos = Snow.currentHeight - this.size;
+		if((this.yPos + this.size >= Snow.game.currentHeight)){
+			this.yPos = Snow.game.currentHeight - this.size;
 			this.onGround = true;
 		}
 		this.timeTillMelt--;

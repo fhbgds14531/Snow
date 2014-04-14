@@ -3,6 +3,7 @@ package snow.prog.fhbgds;
 public class Timer
 {
     float ticksPerSecond;
+    int elapsedTicks = 0;
     public int freq = 0;
     private double lastHighResTime;
     public int elapsedFullTicks;
@@ -13,16 +14,15 @@ public class Timer
     private long field_74285_i;
     private double timeSyncAdjustment = 1.0D;
 
-    public Timer(float par1)
-    {
+    public Timer(float par1) {
         this.ticksPerSecond = par1;
         this.lastSysClockSyncTime = Snow.getSystemTime();
         this.lastSyncHighResClock = System.nanoTime() / 1000000L;
     }
 
-    public void updateTimer()
-    {
+    public void updateTimer() {
     	freq++;
+    	elapsedTicks++;
         long currentTime = Snow.getSystemTime();
         long timeSinceLastSync = currentTime - this.lastSysClockSyncTime;
         long highResTime = System.nanoTime() / 1000000L;
@@ -72,9 +72,21 @@ public class Timer
         if (this.elapsedFullTicks > 10){
             this.elapsedFullTicks = 10;
         }
-        if(this.freq >= Snow.frequency && !Snow.instance.isPaused){
-        	Snow.instance.createFlake();
+        if(this.freq >= Snow.frequency && !Snow.game.isPaused){
+        	Snow.game.createFlake();
         	freq = 0;
+        }
+        if(Snow.game.smallCount > 0) Snow.game.smallCount--;
+        if(Snow.game.smallCount <= 0 && Snow.game.doShrink) {
+        	Snow.game.thePlayer.size = 20;
+        	Snow.game.thePlayer.xPos += 5;
+        	Snow.game.thePlayer.yPos += 5;
+        	Snow.game.smallCount = 0;
+        	Snow.game.doShrink = false;
+        }
+        if(this.elapsedTicks == this.ticksPerSecond) {
+        	this.elapsedTicks = 0;
+//        	System.out.println("bam");
         }
     }
 }

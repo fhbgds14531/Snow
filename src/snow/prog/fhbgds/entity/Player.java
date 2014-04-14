@@ -4,28 +4,29 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map.Entry;
 
-import snow.prog.fhbgds.MathHelp;
 import snow.prog.fhbgds.Snow;
 
 public class Player extends BaseClass{
 
 	public Player(){
 		this.size = 20;
-		this.xPos = (Snow.currentWidth/2) - this.size/2;
-		this.yPos = Snow.currentHeight - this.size;
+		this.xPos = (Snow.game.currentWidth/2) - this.size/2;
+		this.yPos = Snow.game.currentHeight - this.size;
 	}
 
 	@Override
 	public void onUpdate() {
 		if(this.xPos != -1000 && this.yPos != -1000){
-			if(this.xPos < 0) this.xPos = 780;
+			if(this.xPos < 0) this.xPos = Snow.game.currentWidth - this.size;
 			if(this.yPos < 0){
 				this.yPos = 0;
-				Snow.instance.advanceLevel();
+				Snow.game.advanceLevel();
 			}
-			if(this.xPos > 780) this.xPos = 0;
-			if(this.yPos > 580){
-				Snow.instance.decrementLevel();
+			if(this.xPos > Snow.game.currentWidth - this.size) this.xPos = 0;
+			if(this.yPos > Snow.game.currentHeight - this.size && Snow.game.ticksSinceDeath > 1000){
+				Snow.game.decrementLevel();
+			}else if(this.yPos > Snow.game.currentHeight - this.size && Snow.game.ticksSinceDeath <= 1500){
+				this.yPos = 580;
 			}
 		}
 		
@@ -40,58 +41,75 @@ public class Player extends BaseClass{
 			}
 		}
 		if(flag && !Snow.doDevStuff){
-			Snow.instance.handleDeath();
+			Snow.game.handleDeath();
 		}
 		boolean flag1 = false;
-		Powerup powerup = Snow.thePowerup;
+		Powerup powerup = Snow.game.thePowerup;
 		if(powerup != null){
-			if(MathHelp.isBetween(powerup.xPos, this.xPos, this.xPos + this.size)){
-				if(MathHelp.isBetween(powerup.yPos, this.yPos, this.yPos + this.size)){
-					flag1 = true;
-				}
+			float powerupX1 = powerup.xPos;
+			float powerupX2 = powerup.xPos + powerup.size;
+			float powerupY1 = powerup.yPos;
+			float powerupY2 = powerup.yPos + powerup.size;
+			float playerX1 = this.xPos;
+			float playerX2 = this.xPos + this.size;
+			float playerY1 = this.yPos;
+			float playerY2 = this.yPos + this.size;
+		
+			if(powerupX1 >= playerX1 && powerupY1 >= playerY1 && powerupX1 <= playerX2 && powerupY1 <= playerY2){
+				flag1 = true;
 			}
-			if(MathHelp.isBetween(powerup.xPos + powerup.size, this.xPos, this.xPos + this.size)){
-				if(MathHelp.isBetween(powerup.yPos + powerup.size, this.yPos, this.yPos + this.size)){
-					flag = true;
-				}
+			if(powerupX2 >= playerX1 && powerupY1 >= playerY1 && powerupX2 <= playerX2 && powerupY1 <= playerY2){
+				flag = true;
 			}
-			if(MathHelp.isBetween(this.xPos, powerup.xPos, powerup.xPos + powerup.size)){
-				if(MathHelp.isBetween(this.yPos, powerup.yPos, powerup.yPos + powerup.size)){
-					flag1 = true;
-				}
+			if(powerupX2 >= playerX1 && powerupY2 >= playerY1 && powerupX2 <= playerX2 && powerupY2 <= playerY2){
+				flag1 = true;
 			}
-			if(MathHelp.isBetween(powerup.xPos, this.xPos, this.xPos + this.size)){
-				if(MathHelp.isBetween(powerup.yPos + powerup.size, this.yPos, this.yPos + this.size)){
-					flag = true;
-				}
+			if(powerupX1 >= playerX1 && powerupY2 >= playerY1 && powerupX1 <= playerX2 && powerupY2 <= playerY2){
+				flag1 = true;
 			}
 			if(flag1){
-				float pitch = rand.nextFloat();
-				pitch *= rand.nextFloat();
-				if(pitch > 1) pitch = 1;
-				if(pitch < 0.5) pitch = 0.5f;
-				
-				pitch = 0.75f;
-				
-				int type = powerup.getType();
-				if(type == Powerup.TYPE_NUKE){
-					Snow.flakes = new HashMap<Float[], Flake>();
-					Snow.thePowerup = null;
-					Snow.al.playSound("powerup", pitch, 0.8f, false);
-				}
-				if(type == Powerup.TYPE_SLOWTIME){
-					Snow.instance.runSlow();
-					Snow.thePowerup = null;
-					Snow.al.playSound("powerup", pitch, 0.8f, false);
-				}
-				if(type == Powerup.TYPE_LIVES){
-					Snow.lives += 3;
-					Snow.instance.updateTitle();
-					Snow.thePowerup = null;
-					Snow.al.playSound("powerup", pitch, 0.8f, false);
-				}
+				PowerupType type = powerup.getType();
+				this.handlePowerup(type);
 			}
 		}
+	}
+	
+	private void handlePowerup(PowerupType type){
+		float pitch = (rand.nextFloat() * (rand.nextFloat() + 1));
+		if(pitch >  0.9f) pitch =  0.9f;
+		if(pitch < 0.75f) pitch = 0.75f;
+		
+		switch (type){
+		case NUKE:
+			Snow.flakes = new HashMap<Float[], Flake>();
+			Snow.game.thePowerup = null;
+			break;
+		case SLOWTIME:
+			Snow.game.runSlow();
+			Snow.game.thePowerup = null;
+			break;
+		case LIVES:
+			Snow.lives += 3;
+			Snow.game.updateTitle();
+			Snow.game.thePowerup = null;
+			break;
+		case SHRINK:
+			if(!Snow.game.doShrink){
+				this.size = 15;
+				this.xPos += 5;
+				this.yPos += 5;
+				Snow.game.doShrink = true;
+			}
+			Snow.game.thePowerup = null;
+			Snow.game.smallCount = 2048;
+			break;
+		case RANDOM:
+			this.handlePowerup(PowerupType.getRandomPowerupType(rand));
+		case NO_POWERUP:
+			Snow.game.thePowerup = null;
+			return;
+		}
+		if(!Snow.game.isMuted) Snow.al.playSound("powerup", pitch, 0.8f, false);
 	}
 
 	@Override
