@@ -11,9 +11,7 @@ Controls:
 ====
 
 Arrow keys: Move.
-
 Spacebar: Change level color. (Can be useful when the rng picks dark colors)
-
 Escape: Pause/unpause. (You can also unpause by clicking the play button on the pause menu.
-
 F11 (On main menu): Toggle fullscreen.
+
