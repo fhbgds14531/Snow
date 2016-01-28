@@ -11,7 +11,6 @@ import static org.lwjgl.opengl.GL11.glOrtho;
 
 import java.awt.Font;
 import java.io.File;
-import java.net.URL;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map.Entry;
@@ -47,7 +46,7 @@ public class Snow {
 	public static final String musicFileName = "Main.wav";
 //=======================================================
 	
-	private static Float version = 0.5f; //MARKER Version
+	private static Float version = 0.5f; //TODO Version
 	
 //=======================================================
 	public static Random rand = new Random();
@@ -67,7 +66,7 @@ public class Snow {
 	public static float green = 1.0f;
 	public static float blue = 1.0f;
 
-	public static int levelNum = 0;
+	public static int levelNum = 50;
 	public static int maxLevel = 1023;
 	public static Integer[] levelDeaths = new Integer[maxLevel + 1];
 	public static int deaths = 0;
@@ -81,8 +80,13 @@ public class Snow {
 	public volatile boolean isPaused = false;
 	public volatile boolean shouldRenderPaused;
 	public static Snow game;
+	
+	
+	
 	public static HashMap<Float[], Flake> flakes = new HashMap<Float[], Flake>();
 
+	
+	
 	public BaseClass thePlayer;
 
 	public int currentHeight;
@@ -123,6 +127,7 @@ public class Snow {
 	public UnicodeFont titleFont;
 	public UnicodeFont buttonFont;
 	public boolean isGameOver;
+	private float suggestedTimerSpeed;
 	
 	public Snow() { //MARKER Constructor
 		try {
@@ -240,6 +245,7 @@ public class Snow {
 			this.timer.timerSpeed += (0.01f * (levelNum - 99));
 			if(this.timer.timerSpeed > 2f) this.timer.timerSpeed = 2f;
 		}
+		this.suggestedTimerSpeed = this.timer.timerSpeed;
 		System.out.println("Initializing timer with " + this.timer.ticksPerSecond + " TPS at speed "+ this.timer.timerSpeed);
 		
 		while(!Display.isCloseRequested() && !isCloseRequested && !this.currentlyRunning.contentEquals("MainMenu")){ //MARKER Game loop
@@ -275,11 +281,13 @@ public class Snow {
 				if(Keyboard.isKeyDown(Keyboard.KEY_DOWN)) thePlayer.yPos+=1f;
 				if(Keyboard.isKeyDown(Keyboard.KEY_LEFT)) thePlayer.xPos-=1f;
 				if(Keyboard.isKeyDown(Keyboard.KEY_RIGHT)) thePlayer.xPos+=1f;
-				if(runSlow && slowCount <= 255){
+				if(runSlow && slowCount <= 1536){
 					slowCount++;
-					if(slowCount >= 511){
+					if(slowCount >= 1536){
 						slowCount = 0;
 						runSlow = false;
+						this.timer.timerSpeed = this.suggestedTimerSpeed;
+						System.out.println("Reinstating timer speed of " + this.timer.timerSpeed);
 					}
 				}
 			}
@@ -316,10 +324,8 @@ public class Snow {
 
 	public void doTick(){
 		if(levelNum != 1234567890 && !isPaused){
-			if(!this.runSlow){
-				updateFlakes();
-				if(thePowerup != null) thePowerup.onUpdate();
-			}
+			updateFlakes();
+			if(thePowerup != null) thePowerup.onUpdate();
 			this.thePlayer.onUpdate();
 		}
 	}
@@ -432,6 +438,7 @@ public class Snow {
 			thePowerup = null;
 			isPaused = true;
 			runSlow = false;
+			this.timer.timerSpeed = this.suggestedTimerSpeed;
 			slowCount = 0;
 			deaths = 0;
 			if(levelLives != 0){
@@ -444,7 +451,7 @@ public class Snow {
 			thePlayer.yPos = currentHeight - thePlayer.size;
 			levelNum++;
 			changeColors();
-			save();
+			save();	
 			if(levelNum > 99){
 				this.timer.timerSpeed += 0.01f;
 				if(this.timer.timerSpeed > 2.0f) this.timer.timerSpeed = 2.0f;
@@ -468,6 +475,9 @@ public class Snow {
 	public void decrementLevel(){
 		this.isPaused= true;
 		this.ticksSinceDeath = 0;
+		this.runSlow = false;
+		this.timer.timerSpeed = this.suggestedTimerSpeed;
+		slowCount = 0;
 		levelLives = lives;
 		lives = (int) Math.round(baseLives + 0.25*levelNum);
 		levelNum--;
@@ -487,6 +497,7 @@ public class Snow {
 		isPaused = true;
 		this.ticksSinceDeath = 0;
 		runSlow = false;
+		this.timer.timerSpeed = this.suggestedTimerSpeed;
 		slowCount = 0;
 		thePowerup = null;
 		Render.drawFlakes();
@@ -528,76 +539,70 @@ public class Snow {
 	}
 
 	public static void main(String[] args) throws Exception { //MARKER main method
-		new Updater(version);
-		if(!needsUpdate){
-			File updater = new File("Snow_Avoider_Installer.jar");
-			if(updater.exists()) updater.delete();
-			save = new File("0x730x61.sa");
-			lDeaths = new File("0x6c0x64.sa");
-			if(!save.exists() || !lDeaths.exists()){
-				if(!save.exists()) save.createNewFile();
-				if(!lDeaths.exists()) lDeaths.createNewFile();
+		File updater = new File("Snow_Avoider_Installer.jar");
+		if(updater.exists()) updater.delete();
+		save = new File("0x730x61.sa");
+		lDeaths = new File("0x6c0x64.sa");
+		if(!save.exists() || !lDeaths.exists()){
+			if(!save.exists()) save.createNewFile();
+			if(!lDeaths.exists()) lDeaths.createNewFile();
+			loadedLDeaths = false;
+		}else{
+			HashMap<String, String> map = null;
+			try{map = io.load("0x730x61.sa");}catch(Exception e){e.printStackTrace();}
+			if(map != null){
+				Iterator<Entry<String, String>> it = map.entrySet().iterator();
+				while(it.hasNext()){
+					Entry<String, String> entry = it.next();
+					String key = entry.getKey();
+					if(key.contentEquals("levelNum")){
+						Snow.levelNum = Integer.valueOf(entry.getValue());
+						if(Snow.levelNum == 1234567890) {
+							Snow.levelNum = 0;
+						}
+					}
+					if(key.contentEquals("deaths")){
+						deaths = Integer.valueOf(entry.getValue());
+					}
+					if(key.contentEquals("totalDeaths")){
+						totalDeaths = Integer.valueOf(entry.getValue());
+					}
+					if(key.contentEquals("red")){
+						red = Float.valueOf(entry.getValue());
+					}
+					if(key.contentEquals("green")){
+						green = Float.valueOf(entry.getValue());
+					}
+					if(key.contentEquals("blue")){
+						blue = Float.valueOf(entry.getValue());
+					}
+					if(key.contains("levelLives")){
+						levelLives = Integer.valueOf(entry.getValue());
+					}
+					if(key.contains("isWinner")){
+						isWinner = Boolean.valueOf(entry.getValue());
+					}
+				}
+			}
+			try{
+				levelDeaths = io.loadLevelDeaths("0x6c0x64.sa");
+				if(levelDeaths.length == Snow.maxLevel) {
+					loadedLDeaths = true;
+				}else {
+					levelDeaths = new Integer[maxLevel + 1];
+				}
+			}catch(Exception e1){
 				loadedLDeaths = false;
-			}else{
-				HashMap<String, String> map = null;
-				try{map = io.load("0x730x61.sa");}catch(Exception e){e.printStackTrace();}
-				if(map != null){
-					Iterator<Entry<String, String>> it = map.entrySet().iterator();
-					while(it.hasNext()){
-						Entry<String, String> entry = it.next();
-						String key = entry.getKey();
-						if(key.contentEquals("levelNum")){
-							Snow.levelNum = Integer.valueOf(entry.getValue());
-							if(Snow.levelNum == 1234567890) {
-								Snow.levelNum = 0;
-							}
-						}
-						if(key.contentEquals("deaths")){
-							deaths = Integer.valueOf(entry.getValue());
-						}
-						if(key.contentEquals("totalDeaths")){
-							totalDeaths = Integer.valueOf(entry.getValue());
-						}
-						if(key.contentEquals("red")){
-							red = Float.valueOf(entry.getValue());
-						}
-						if(key.contentEquals("green")){
-							green = Float.valueOf(entry.getValue());
-						}
-						if(key.contentEquals("blue")){
-							blue = Float.valueOf(entry.getValue());
-						}
-						if(key.contains("levelLives")){
-							levelLives = Integer.valueOf(entry.getValue());
-						}
-						if(key.contains("isWinner")){
-							isWinner = Boolean.valueOf(entry.getValue());
-						}
-					}
-				}
-				try{
-					levelDeaths = io.loadLevelDeaths("0x6c0x64.sa");
-					if(levelDeaths.length == Snow.maxLevel) {
-						loadedLDeaths = true;
-					}else {
-						levelDeaths = new Integer[maxLevel + 1];
-					}
-				}catch(Exception e1){
-					loadedLDeaths = false;
-					e1.printStackTrace();
-				}
+				e1.printStackTrace();
 			}
-			File dev = new File("IAMFHBGDS");
-			if(dev.exists()){
-				doDevStuff = true;
-				System.out.println("RUNNING AS DEVELOPER");
-			}
-			new PNGLoader().setIcons();
-			new Snow();
-		}else if(needsUpdate){
-			Updater.downloadFile(new File("Snow_Avoider_Installer.jar"), new URL("https://github.com/fhbgds14531/SnowAvoiderDL/raw/master/Snow_Avoider_Installer.jar"));
-			try{Runtime.getRuntime().exec("javaw.exe -jar Snow_Avoider_Installer.jar"); System.exit(0);}catch(Exception e){e.printStackTrace();}
 		}
+		File dev = new File("IAMFHBGDS");
+		if(dev.exists()){
+			doDevStuff = true;
+			System.out.println("RUNNING AS DEVELOPER");
+		}
+		new PNGLoader().setIcons();
+		new Snow();
 	}
 
 	public void save(){
@@ -621,6 +626,9 @@ public class Snow {
 
 	public void runSlow() {
 		this.runSlow = true;
+		this.suggestedTimerSpeed = this.timer.timerSpeed;
+		this.timer.timerSpeed /= 3;
+		System.out.println("Changing timer speed to " + this.timer.timerSpeed);
 	}
 
 	public void updateTitle() {
@@ -688,7 +696,7 @@ public class Snow {
 						}
 						AL10.alSourceStop(al.getSources()[0].get(0));
 						AL10.alSourcef(al.getSources()[0].get(0), AL10.AL_GAIN, 1f);
-						AL10.alSourcePlay(al.getSources()[0].get(0));
+						if(!this.isMuted) al.playSound("main", 1, 1, true);
 						if(this.isGameOver) {
 							levelNum = 0;
 							for(int i = 0; i < levelDeaths.length; i++) {

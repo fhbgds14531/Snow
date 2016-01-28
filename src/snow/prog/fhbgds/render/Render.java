@@ -150,7 +150,11 @@ public class Render {
 			glPopMatrix();
 		} else {
 			drawString(Snow.game.font, 2, 0, "Level: " + Snow.levelNum);
-			drawString(Snow.game.font, 2, 20, "Deaths: " + Snow.levelDeaths[Snow.levelNum]);
+			if(Snow.levelNum > -1){
+				drawString(Snow.game.font, 2, 20, "Deaths: " + Snow.levelDeaths[Snow.levelNum]);
+			}else{
+				drawString(Snow.game.font, 2, 20, "Deaths: N/A");
+			}
 			drawString(Snow.game.font, 2, 40, "Lives: " + Snow.lives);
 			Render.drawTexturedRectangle(Snow.game.thePlayer.xPos, Snow.game.thePlayer.yPos, Snow.game.thePlayer.size, Snow.game.thePlayer.size, Snow.game.player);
 			if(Snow.game.thePowerup != null){

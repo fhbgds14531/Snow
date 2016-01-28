@@ -72,7 +72,7 @@ public class Timer
         if (this.elapsedFullTicks > 10){
             this.elapsedFullTicks = 10;
         }
-        if(this.freq >= Snow.frequency && !Snow.game.isPaused){
+        if((this.freq * this.timerSpeed) >= Snow.frequency && !Snow.game.isPaused){
         	Snow.game.createFlake();
         	freq = 0;
         }
